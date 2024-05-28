@@ -827,7 +827,6 @@ class DAMP(TrainerXU):
         """A generic testing pipeline."""
         self.set_model_mode("eval")
         self.evaluator.reset()
-        self.evaluator2.reset()
         if split is None:
             split = self.cfg.TEST.SPLIT
 
@@ -837,13 +836,9 @@ class DAMP(TrainerXU):
         for batch_idx, batch in enumerate(data_loader):
             input, label = self.parse_batch_test(batch)
             output, output_pse = self.model_inference(input)
-            mix_lambda = self.epoch / self.max_epoch
-            pseudo_label = (torch.softmax(output.reshape(-1, self.n_cls), dim=-1) * mix_lambda + torch.softmax(output_pse.reshape(-1, self.n_cls), dim=-1) * (1-mix_lambda)).detach()  
-            self.evaluator.process(pseudo_label, label)
-            self.evaluator2.process(output, label)
+            self.evaluator.process(output, label)
 
         results = self.evaluator.evaluate()
-        results2 = self.evaluator2.evaluate()
         for k, v in results.items():
             tag = "{}/{}".format(split, k)
             self.write_scalar(tag, v, self.epoch)
